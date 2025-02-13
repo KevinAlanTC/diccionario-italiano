@@ -1,2 +1,2 @@
 # diccionario-italiano
-Script de diccionario italiano-español
+Script de JavaScript de diccionario italiano-español
