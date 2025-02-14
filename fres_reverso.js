@@ -1,5 +1,5 @@
 /* API global */
-class ItesFrReverso {
+class fres_Reverso {
     constructor(opciones) {
         this.opciones = opciones;
         this.maxResults = 7;
@@ -85,4 +85,4 @@ class ItesFrReverso {
     }
 }
 
-export default ItesFrReverso;
+export default fres_Reverso;
