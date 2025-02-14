@@ -1,88 +1,100 @@
-/* API global */
+/* global api */
 class fres_Reverso {
-    constructor(opciones) {
-        this.opciones = opciones;
-        this.maxResults = 7;
-        this.palabra = '';
+    constructor(options) {
+        this.options = options;
+        this.maxexample = 2;
+        this.word = '';
     }
 
-    async inicializar() {
-        // Configuración regional > devuelve el formato para francés -> español | Reverso
-        if (configuracion.regional.indexOf('fr') > -1) return 'francés' + ' > Español | Reverso';
-        return 'français' + ' > Español | Reverso';
+    async displayName() {
+        let locale = await api.locale();
+        if (locale.indexOf('ES') != -1) return 'Francés -> Español | Reverso';
+        return 'Français -> Espagnol | Reverso';
     }
 
-    setOpciones(opciones) {
-        this.opciones = opciones;
-        this.maxResults = opciones.maxResults;
+    setOptions(options) {
+        this.options = options;
+        this.maxexample = options.maxexample;
     }
 
-    async filtrarPalabra(palabra) {
-        this.palabra = palabra;
-        let resultados = await Promise.resolve(this.findReverso(palabra));
-        return [].concat(...resultados).filter(x => x);
+    async findTerm(word) {
+        this.word = word;
+        let results = await Promise.all([this.findReverso(word)]);
+        return [].concat(...results).filter(x => x);
     }
 
-    async findReverso(palabra) {
-        let notas = [];
-        if (palabra) devolucion notas;
+    async findReverso(word) {
+        let notes = [];
+        if (!word) return notes;
 
-        function f(nodo) {
-            if (nodo)
-                devolucion '';
+        function T(node) {
+            if (!node)
+                return '';
             else
-                devolucion nodo.texto.interno.reportar();
+                return node.innerText.trim();
         }
 
-        let traducciones = document.querySelectorAll('#translations-content');
-        if (!traducciones.length) devolucion notas;
+        let base = 'https://context.reverso.net/traduccion/frances-espanol/';
+        let url = base + encodeURIComponent(word);
+        let doc = '';
+        try {
+            let data = await api.fetch(url);
+            let parser = new DOMParser();
+            doc = parser.parseFromString(data, 'text/html');
+        } catch (err) {
+            return [];
+        }
 
-        let definiciones = {};
-        let ejemplos = document.querySelectorAll('#examples-content .example');
+        let translations = doc.querySelectorAll('.translation');
+        if (!translations.length) return notes;
+
+        let definitions = [];
+        let examples = doc.querySelectorAll('.example');
 
         // Procesar las traducciones y ejemplos
-        let definición = '';
-        let span_tran = '<span class="fr_tran">${span_tran}</span>';
-        definición = '<span class="tran">${span_tran}</span>';
+        let definition = '';
+        let spa_tran = Array.from(translations)
+            .slice(0, 3)
+            .map(t => T(t))
+            .join(', ');
 
-        if (ejemplos.length > 0 && this.maxResults > 0) {
-            definición = '<ul class="notas">';
-            for (let ejemplo of ejemplos) {
-                let fr_text = (ejemplo.querySelectorAll('.src')); // Texto en francés
-                let es_text = (ejemplo.querySelectorAll('.trg')); // Texto en español
-                let exam_concat = ' : ' + '<span style="color:azure">' + es_text + '</span>';
-                definición += '<li class="ejemplo"><span class="fr_sent">${exam_concat}</span></li>';
+        spa_tran = `<span class='spa_tran'>${spa_tran}</span>`;
+        definition += `<span class='tran'>${spa_tran}</span>`;
+
+        if (examples.length > 0 && this.maxexample > 0) {
+            definition += '<ul class="sents">';
+            for (let i = 0; i < Math.min(this.maxexample, examples.length); i++) {
+                let example = examples[i];
+                let fr_text = T(example.querySelector('.src'));
+                let spa_text = T(example.querySelector('.trg'));
+                let examp_concat = fr_text + ' - ' + '<span style="color:blue;">' + spa_text + '</span>';
+                definition += `<li class='sent'><span class='fr_sent'>${examp_concat}</span></li>`;
             }
-            definición = '</ul>';
+            definition += '</ul>';
         }
 
-        definición = definiciones.map(def => definición);
+        definition && definitions.push(definition);
 
         let css = this.renderCSS();
-        notas.map(f);
+        notes.push({
+            css,
+            expression: word,
+            reading: '',
+            extrainfo: '',
+            definitions,
+            audios: []
+        });
 
-        css, {
-            expresion: palabra,
-            isActive: true,
-            extraInfo: '',
-            definiciones,
-            Audio: []
-        };
-
-        devolucion css;
+        return notes;
     }
 
     renderCSS() {
         let css = `
-        <estilo>
-            span.tran {margin:0; relleno:0;}
-            span.fr_tran {margin-right:3px; padding:0;}
-            ul.notas {font-size:0.9em; list-style:square inside; margin:3px 0; relleno:5px; antecedentes:rgba(33,37,38,0.1); radio-border:5px;}
-            li.sent {margin:0; relleno:0;}
-            span.fr_sent {margin-right:5px;}
-        </estilo>`;
+            <style>
+                span.tran {margin:0; padding:0;}
+                span.spa_tran {margin-right:3px; padding:0;}
+                ul.sents {font-size:0.8em; list-style:square inside; margin:3px 0;padding:5px;background:rgba(13,71,161,0.1); border-radius:5px;}
+                li.sent {margin:0; padding:0;}
+                span.fr_sent {margin-right:5px;}
+            </style>`;
         return css;
-    }
-}
-
-export default fres_Reverso;
