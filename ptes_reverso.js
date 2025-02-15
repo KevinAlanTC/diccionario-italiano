@@ -19,53 +19,8 @@ class ptes_Reverso {
 
     async findTerm(word) {
         this.word = word;
-        let results = await Promise.all([this.findReverso(word), this.findWiktionary(word)]);
+        let results = await Promise.all([this.findReverso(word)]);
         return [].concat(...results).filter(x => x);
-    }
-
-    async findWiktionary(word) {
-        if (!word) return [];
-        
-        let url = `https://pt.wiktionary.org/wiki/${encodeURIComponent(word)}`;
-        let doc = '';
-        try {
-            let data = await api.fetch(url);
-            let parser = new DOMParser();
-            doc = parser.parseFromString(data, 'text/html');
-            
-            // Buscar la pronunciación IPA
-            let ipaElement = doc.querySelector('.IPA');
-            return ipaElement ? ipaElement.textContent.trim() : '';
-            
-        } catch (err) {
-            return '';
-        }
-    }
-
-    async findForvoAudio(word) {
-        if (!word) return [];
-        
-        let audioUrls = [];
-        let url = `https://forvo.com/word/${encodeURIComponent(word)}/#pt`;
-        try {
-            let data = await api.fetch(url);
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(data, 'text/html');
-            
-            // Buscar pronunciaciones en portugués
-            let audioElements = doc.querySelectorAll('article[lang="pt"] .play');
-            audioElements.forEach(el => {
-                if (el.getAttribute('onclick')) {
-                    let mp3Url = el.getAttribute('onclick').match(/('[^']+\.mp3')/);
-                    if (mp3Url) {
-                        audioUrls.push(`https://audio00.forvo.com/mp3/${mp3Url[1].replace(/'/g, '')}`);
-                    }
-                }
-            });
-        } catch (err) {
-            console.log('Error getting Forvo audio:', err);
-        }
-        return audioUrls;
     }
 
     async findReverso(word) {
@@ -79,6 +34,7 @@ class ptes_Reverso {
                 return node.innerText.trim();
         }
 
+        // Primero busquemos en Reverso para las traducciones
         let base = 'https://context.reverso.net/traduccion/portugues-espanol/';
         let url = base + encodeURIComponent(word);
         let doc = '';
@@ -93,16 +49,41 @@ class ptes_Reverso {
         let translations = doc.querySelectorAll('.translation');
         if (!translations.length) return notes;
 
-        // Obtener pronunciación IPA
-        let ipaReading = await this.findWiktionary(word);
+        // Ahora busquemos en Linguee para el audio y IPA
+        let lingueeUrl = `https://www.linguee.pt/portugues-espanhol/search?source=portugues&query=${encodeURIComponent(word)}`;
+        let lingueeDoc = '';
+        let audios = [];
+        let reading = '';
         
-        // Obtener audios de Forvo
-        let audios = await this.findForvoAudio(word);
+        try {
+            let lingueeData = await api.fetch(lingueeUrl);
+            let lingueeParser = new DOMParser();
+            lingueeDoc = lingueeParser.parseFromString(lingueeData, 'text/html');
+            
+            // Obtener audio
+            let audioElement = lingueeDoc.querySelector('.audio');
+            if (audioElement) {
+                let audioUrl = audioElement.getAttribute('onclick');
+                if (audioUrl) {
+                    let mp3Match = audioUrl.match(/['"]([^'"]+\.mp3)['"]/);
+                    if (mp3Match) {
+                        audios.push('https://www.linguee.pt' + mp3Match[1]);
+                    }
+                }
+            }
+
+            // Obtener IPA
+            let ipaElement = lingueeDoc.querySelector('.spelling');
+            if (ipaElement) {
+                reading = ipaElement.textContent.trim();
+            }
+        } catch (err) {
+            console.log('Error getting Linguee data:', err);
+        }
 
         let definitions = [];
         let examples = doc.querySelectorAll('.example');
 
-        // Procesar las traducciones y ejemplos
         let definition = '';
         let spa_tran = Array.from(translations)
             .slice(0, 3)
@@ -130,10 +111,10 @@ class ptes_Reverso {
         notes.push({
             css,
             expression: word,
-            reading: ipaReading, // Incluimos la transcripción fonética
+            reading,
             extrainfo: '',
             definitions,
-            audios  // Incluimos los audios de Forvo
+            audios
         });
 
         return notes;
