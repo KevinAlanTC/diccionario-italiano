@@ -39,34 +39,20 @@ class ptes_Reverso {
             let parser = new DOMParser();
             doc = parser.parseFromString(data, 'text/html');
         } catch (err) {
-            console.log("Error fetching or parsing document: ", err); // Log de error
             return [];
         }
 
         let translations = doc.querySelectorAll('.translation');
-        if (!translations.length) {
-            console.log("No translations found"); // Log de traducciones no encontradas
-            return notes;
-        }
+        if (!translations.length) return notes;
 
         let audios = [];
-        let audioElement = doc.querySelector('audio');
-        if (audioElement) {
-            let source = audioElement.querySelector('source');
-            if (source) {
-                audios.push(source.src);
-            } else {
-                console.log("No audio source found"); // Log de fuente de audio no encontrada
-            }
-        } else {
-            console.log("No audio element found"); // Log de elemento de audio no encontrado
+        let sound = doc.querySelector('a.hwd_sound');
+        if (sound) {
+            audios.push(sound.dataset.srcMp3);
         }
 
         let definitions = [];
         let examples = doc.querySelectorAll('.example');
-        if (!examples.length) {
-            console.log("No examples found"); // Log de ejemplos no encontrados
-        }
 
         let definition = '';
         let spa_tran = Array.from(translations)
@@ -83,12 +69,8 @@ class ptes_Reverso {
                 let example = examples[i];
                 let pt_text = T(example.querySelector('.src'));
                 let spa_text = T(example.querySelector('.trg'));
-                if (pt_text && spa_text) {
-                    let examp_concat = pt_text + ' - ' + '<span style="color:blue;">' + spa_text + '</span>';
-                    definition += `<li class='sent'><span class='pt_sent'>${examp_concat}</span></li>`;
-                } else {
-                    console.log("Example text not found"); // Log de texto de ejemplo no encontrado
-                }
+                let examp_concat = pt_text + ' - ' + '<span style="color:blue;">' + spa_text + '</span>';
+                definition += `<li class='sent'><span class='pt_sent'>${examp_concat}</span></li>`;
             }
             definition += '</ul>';
         }
