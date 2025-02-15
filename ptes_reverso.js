@@ -43,7 +43,10 @@ class ptes_Reverso {
         }
 
         let translations = doc.querySelectorAll('.translation');
-        if (!translations.length) return notes;
+        if (!translations.length) {
+            console.log("No translations found");
+            return notes;
+        }
 
         let audios = [];
         let audioElement = doc.querySelector('audio');
@@ -51,7 +54,11 @@ class ptes_Reverso {
             let source = audioElement.querySelector('source');
             if (source) {
                 audios.push(source.src);
+            } else {
+                console.log("No audio source found");
             }
+        } else {
+            console.log("No audio element found");
         }
 
         let definitions = [];
