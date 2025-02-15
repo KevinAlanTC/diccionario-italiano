@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <HTML lang="es">
-<cabeza>
-    <meta conjunto de caracteres="UTF-8">
-    <meta nombre="viewport" contenido="width=device-width, initial-scale=1.0">
-    <título>Diccionarios Reverso</título>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diccionarios Reverso</title>
     <style>
         .dict-selector {
             margin: 10px;
@@ -13,22 +13,35 @@
             background-color: #4CAF50;
             color: white;
         }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
     </style>
-</cabeza>
-<cuerpo>
+</head>
+<body>
     <h1>Diccionarios Reverso</h1>
     <div class="dict-selector">
         <button id="ita-btn" class="active">Italiano-Español</button>
         <button id="fra-btn">Francés-Español</button>
+        <button id="pt-btn">Portugués-Español</button>
     </div>
     <p>Este repositorio contiene diccionarios para su uso con extensiones de navegador.</p>
     <p>Los archivos de los diccionarios están disponibles en:
         <ul>
             <li><a href="ites_reverso.js">Italiano-Español</a></li>
             <li><a href="fres_reverso.js">Francés-Español</a></li>
+            <li><a href="ptes_reverso.js">Portugués-Español</a></li>
         </ul>
     </p>
-    <guión fuente="ites_reverso.js"></guión>
-    <guión fuente="fres_reverso.js"></guión>
-</cuerpo>
+    <script src="ites_reverso.js"></script>
+    <script src="fres_reverso.js"></script>
+    <script src="ptes_reverso.js"></script>
+</body>
 </HTML>
