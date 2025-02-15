@@ -45,11 +45,7 @@ class ptes_Reverso {
         let translations = doc.querySelectorAll('.translation');
         if (!translations.length) return notes;
 
-        let audios = [];
-        let sound = doc.querySelector('a.hwd_sound');
-        if (sound) {
-            audios.push(sound.dataset.srcMp3);
-        }
+        let audios = await this.findCollinsAudio(word);
 
         let definitions = [];
         let examples = doc.querySelectorAll('.example');
@@ -88,6 +84,24 @@ class ptes_Reverso {
         });
 
         return notes;
+    }
+
+    async findCollinsAudio(word) {
+        let audios = [];
+        let base = 'https://www.collinsdictionary.com/dictionary/portuguese-english/';
+        let url = base + encodeURIComponent(word);
+        try {
+            let data = await api.fetch(url);
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(data, 'text/html');
+            let sound = doc.querySelector('a.hwd_sound');
+            if (sound) {
+                audios.push(sound.dataset.srcMp3);
+            }
+        } catch (err) {
+            console.log('Error fetching audio from Collins:', err);
+        }
+        return audios;
     }
 
     renderCSS() {
