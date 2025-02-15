@@ -28,13 +28,9 @@ class ptes_Reverso {
         if (!word) return notes;
 
         function T(node) {
-            if (!node)
-                return '';
-            else
-                return node.innerText.trim();
+            return node ? node.innerText.trim() : '';
         }
 
-        // Primero busquemos en Reverso para las traducciones
         let base = 'https://context.reverso.net/traduccion/portugues-espanol/';
         let url = base + encodeURIComponent(word);
         let doc = '';
@@ -49,36 +45,13 @@ class ptes_Reverso {
         let translations = doc.querySelectorAll('.translation');
         if (!translations.length) return notes;
 
-        // Ahora busquemos en Linguee para el audio y IPA
-        let lingueeUrl = `https://www.linguee.pt/portugues-espanhol/search?source=portugues&query=${encodeURIComponent(word)}`;
-        let lingueeDoc = '';
         let audios = [];
-        let reading = '';
-        
-        try {
-            let lingueeData = await api.fetch(lingueeUrl);
-            let lingueeParser = new DOMParser();
-            lingueeDoc = lingueeParser.parseFromString(lingueeData, 'text/html');
-            
-            // Obtener audio
-            let audioElement = lingueeDoc.querySelector('.audio');
-            if (audioElement) {
-                let audioUrl = audioElement.getAttribute('onclick');
-                if (audioUrl) {
-                    let mp3Match = audioUrl.match(/['"]([^'"]+\.mp3)['"]/);
-                    if (mp3Match) {
-                        audios.push('https://www.linguee.pt' + mp3Match[1]);
-                    }
-                }
+        let audioElement = doc.querySelector('audio');
+        if (audioElement) {
+            let source = audioElement.querySelector('source');
+            if (source) {
+                audios.push(source.src);
             }
-
-            // Obtener IPA
-            let ipaElement = lingueeDoc.querySelector('.spelling');
-            if (ipaElement) {
-                reading = ipaElement.textContent.trim();
-            }
-        } catch (err) {
-            console.log('Error getting Linguee data:', err);
         }
 
         let definitions = [];
@@ -111,7 +84,7 @@ class ptes_Reverso {
         notes.push({
             css,
             expression: word,
-            reading,
+            reading: '',
             extrainfo: '',
             definitions,
             audios
